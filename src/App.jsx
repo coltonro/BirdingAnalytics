@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import Papa from "papaparse";
 import { Loader2, Upload, Search, ChevronDown } from "lucide-react";
@@ -63,7 +63,7 @@ const BirdSpeciesTracker = () => {
   const [sortBy, setSortBy] = useState("county");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentView, setCurrentView] = useState("analytics");
-  const [selectedState, setSelectedState] = useState("All");
+  const [selectedState, setSelectedState] = useState("All States");
 
   const onDrop = useCallback((acceptedFiles) => {
     setFile(acceptedFiles[0]);
@@ -85,11 +85,15 @@ const BirdSpeciesTracker = () => {
   };
 
   const processData = (rawData) => {
-
     const stateCountyData = {};
     rawData.forEach((row) => {
       if (row.County) {
-        const { County, Date, "Taxonomic Order": species, "State/Province": stateAbbr } = row;
+        const {
+          County,
+          Date,
+          "Taxonomic Order": species,
+          "State/Province": stateAbbr,
+        } = row;
         const state = stateAbbreviations[stateAbbr] || stateAbbr;
         if (!stateCountyData[state]) {
           stateCountyData[state] = {};
@@ -125,11 +129,10 @@ const BirdSpeciesTracker = () => {
 
   const filteredData = data.filter((item) => {
     const searchLower = searchTerm.toLowerCase();
-    // return item.county.toLowerCase().includes(searchLower);
     return (
-    (selectedState === "All" || item.state === selectedState) &&
-        item.county.toLowerCase().includes(searchLower)
-    )
+      (selectedState === "All States" || item.state === selectedState) &&
+      item.county.toLowerCase().includes(searchLower)
+    );
   });
 
   const sortedData = [...filteredData].sort((a, b) => {
@@ -142,16 +145,13 @@ const BirdSpeciesTracker = () => {
     }
   });
 
+  const statesWithData = useMemo(() => {
+    const states = new Set(data.map((item) => item.state));
+    return ["All States", ...Array.from(states).sort()];
+  }, [data]);
+
   const NavBar = () => (
     <nav className="bg-blue-500 p-4 flex justify-between items-center">
-      {/* <div className="mx-20 flex items-center"> */}
-      <div className="flex items-center">
-        <img
-          src="src/assets/cardinal_icon.png"
-          alt="Logo"
-          className="h-12 w-12 mr-2"
-        />
-      </div>
       <div className="text-white text-xl font-bold">Birding Analytics</div>
       <div className="flex items-center">
         <button
@@ -170,18 +170,17 @@ const BirdSpeciesTracker = () => {
         >
           About
         </button>
-        <button
+        {/* <button
           onClick={() => {
-            setCurrentView("upload");
+            document.querySelector('input[type="file"]').click()
           }}
           className={`text-white ${
             currentView === "upload" ? "font-bold" : ""
           }`}
         >
           Upload
-        </button>
+        </button> */}
       </div>
-      {/* </div> */}
     </nav>
   );
 
@@ -189,49 +188,85 @@ const BirdSpeciesTracker = () => {
     <div className="p-4 max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">About Birding Analytics</h2>
       <p className="mb-4">
-        Birding Analytics finds your Big Days for you. It shows birders
-        which days they&apos;ve seen the most bird species.
+        Birding Analytics finds your Big Days for you. It shows birders which
+        days they&apos;ve seen the most bird species.
       </p>
       <p className="mb-4">
-        To use just upload your eBird data via a .csv file. You can get this from eBird&apos;s <a href="https://ebird.org/downloadMyData" target="_blank" rel="noopener noreferrer"><u>MyData</u></a> page.
+        To use just upload your eBird data via a .csv file. You can get this
+        from eBird&apos;s{" "}
+        <a
+          href="https://ebird.org/downloadMyData"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <u>MyData</u>
+        </a>{" "}
+        page.
       </p>
-      <p>
-        This tool was created by me, Colton Robbins, a birder in central Texas. You can contact me at birdingoutfitter@gmail.com
+      <p className="mb-4">
+        Birding Analytics currently only works with US states.
+      </p>
+      <p className="mb-4">
+        This tool was created by me, Colton Robbins, a birder in central Texas.
+        You can contact me at birdingoutfitter@gmail.com
       </p>
     </div>
   );
 
+  console.log("file: ", file);
+  console.log("file: ", file && file.type);
+  console.log("data: ", data);
+
   return (
     <>
       <NavBar />
-      {currentView === "about" ? <AboutView /> : 
-      <div className="min-h-screen flex flex-col items-center">
-          {!file && <div
-            {...getRootProps()}
-            className="border-2 border-dashed p-4 mb-4 rounded-lg"
-          >
-            <input {...getInputProps()} />
-            {isDragActive ? (
-              <p>Drop the file here ...</p>
-            ) : (
-              <p>Drag & drop a CSV file here, or click to select a file</p>
-            )}
-            <div className="flex space-x-2 mb-4"></div>
-          </div>}
-
-          {!file && <div className="flex space-x-2 mb-4">
-            <button
-              onClick={() =>
-                document.querySelector('input[type="file"]').click()
-              }
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center"
+      {file !== null && file.type !== "text/csv" && (
+        <div className="flex flex-col items-center mt-6">
+          <div className="">File must be a .csv.</div>
+          <div className="">Please refresh the page and try again.</div>
+        </div>
+      )}
+      {!loading && file !== null && file.type === "text/csv" && Array.isArray(data) && data.length === 0 && (
+        <div className="flex flex-col items-center mt-6">
+          <div className="">File seems to be missing necessary columns like State, County, and Date.</div>
+          <div className="">Please ensure your csv file is from eBird and isn&apos;t corrupted.</div>
+          <div className="mt-6">Refresh the page to try again.</div>
+        </div>
+      )}
+      {currentView === "about" ? (
+        <AboutView />
+      ) : (
+        <div className="min-h-screen flex flex-col items-center">
+          {!file && (
+            <div
+              {...getRootProps()}
+              className="border-2 border-dashed p-4 my-4 rounded-lg"
             >
-              <Upload className="mr-2" size={16} /> Upload
-            </button>
-          </div>}
+              <input {...getInputProps()} />
+              {isDragActive ? (
+                <p>Drop the file here ...</p>
+              ) : (
+                <p>Drag & drop a CSV file here, or click to select a file</p>
+              )}
+              <div className="flex space-x-2 mb-4"></div>
+            </div>
+          )}
+
+          {!file && (
+            <div className="flex space-x-2 mb-4">
+              <button
+                onClick={() =>
+                  document.querySelector('input[type="file"]').click()
+                }
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center"
+              >
+                <Upload className="mr-2" size={16} /> Upload
+              </button>
+            </div>
+          )}
 
           {loading && (
-            <div className="flex justify-center items-center mb-4">
+            <div className="flex justify-center items-center my-6">
               <Loader2 className="animate-spin mr-2" size={24} />
               <span>Loading...</span>
             </div>
@@ -273,28 +308,31 @@ const BirdSpeciesTracker = () => {
                 />
               </div>
               {sortBy === "county" && (
-            <div className="flex justify-center pb-3">
-              <div className="relative inline-block text-left">
-                <select
-                  value={selectedState}
-                  onChange={(e) => setSelectedState(e.target.value)}
-                  className="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-400 px-4 py-2 pr-8 rounded-lg leading-tight focus:outline-none focus:shadow-outline"
-                >
-                  <option value="All">All States</option>
-                  {Object.values(stateAbbreviations)
-                    .sort()
-                    .map((state) => (
-                      <option key={state} value={state}>
-                        {state}
-                      </option>
-                    ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                  <ChevronDown size={20} />
+                <div className="flex justify-center pb-3">
+                  <div className="relative inline-block text-left">
+                    <select
+                      value={selectedState}
+                      onChange={(e) => setSelectedState(e.target.value)}
+                      className="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-400 px-4 py-2 pr-8 rounded-lg leading-tight focus:outline-none focus:shadow-outline"
+                    >
+                      {statesWithData.map((state) => (
+                        <option key={state} value={state}>
+                          {state}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <ChevronDown size={20} />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
+              {sortBy === "date" && (
+                <h3 className="flex justify-center mb-5">
+                  Top Big Day in each County
+                </h3>
+              )}
+
               {sortedData.map((item, index) => (
                 <div
                   key={`${item.state}-${item.county}-${index}`}
@@ -326,8 +364,8 @@ const BirdSpeciesTracker = () => {
               ))}
             </div>
           )}
-        </div>}
-
+        </div>
+      )}
     </>
   );
 };
