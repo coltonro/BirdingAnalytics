@@ -222,29 +222,53 @@ const BirdSpeciesTracker = () => {
           <div className="">Please refresh the page and try again.</div>
         </div>
       )}
-      {!loading && file !== null && file.type === "text/csv" && Array.isArray(data) && data.length === 0 && (
-        <div className="flex flex-col items-center mt-6">
-          <div className="">File seems to be missing necessary columns like State, County, and Date.</div>
-          <div className="">Please ensure your csv file is from eBird and isn&apos;t corrupted.</div>
-          <div className="mt-6">Refresh the page to try again.</div>
-        </div>
-      )}
+      {!loading &&
+        file !== null &&
+        file.type === "text/csv" &&
+        Array.isArray(data) &&
+        data.length === 0 && (
+          <div className="flex flex-col items-center mt-6">
+            <div className="">
+              File seems to be missing necessary columns like State, County, and
+              Date.
+            </div>
+            <div className="">
+              Please ensure your csv file is from eBird and isn&apos;t
+              corrupted.
+            </div>
+            <div className="mt-6">Refresh the page to try again.</div>
+          </div>
+        )}
       {currentView === "about" ? (
         <AboutView />
       ) : (
         <div className="min-h-screen flex flex-col items-center">
           {!file && (
-            <div
-              {...getRootProps()}
-              className="border-2 border-dashed p-4 my-4 rounded-lg"
-            >
-              <input {...getInputProps()} />
-              {isDragActive ? (
-                <p>Drop the file here ...</p>
-              ) : (
-                <p>Drag & drop a CSV file here, or click to select a file</p>
-              )}
-              <div className="flex space-x-2 mb-4"></div>
+            <div className="flex flex-col items-center mt-4 w-[100%] max-w-[600px]">
+              <p>
+                Upload your{" "}
+                <a
+                  href="https://ebird.org/downloadMyData"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <u>eBird Data</u>
+                </a>
+              </p>
+              <div
+                {...getRootProps()}
+                className="border-2 border-dashed flex flex-col justify-center w-[100%] h-[150px] p-4 my-4 rounded-lg"
+              >
+                <input {...getInputProps()} />
+                {isDragActive ? (
+                  <p>Drop the file here ...</p>
+                ) : (
+                  <p className="flex flex-col items-center">
+                    Drag & drop CSV file here
+                  </p>
+                )}
+                <div className="flex space-x-2 mb-4"></div>
+              </div>
             </div>
           )}
 
