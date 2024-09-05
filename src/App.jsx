@@ -213,10 +213,6 @@ const BirdSpeciesTracker = () => {
     </div>
   );
 
-  console.log("file: ", file);
-  console.log("file: ", file && file.type);
-  console.log("data: ", data);
-
   return (
     <>
       <NavBar />
@@ -328,7 +324,7 @@ const BirdSpeciesTracker = () => {
                 </div>
               )}
               {sortBy === "date" && (
-                <h3 className="flex justify-center mb-5">
+                <h3 className="flex justify-center mb-6">
                   Top Big Day in each County
                 </h3>
               )}
