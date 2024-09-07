@@ -1,7 +1,8 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import Papa from "papaparse";
 import { Loader2, Upload, Search, ChevronDown } from "lucide-react";
+import csvFile from "./dummy_data.csv";
 
 const stateAbbreviations = {
   "US-AL": "Alabama",
@@ -62,6 +63,7 @@ const BirdSpeciesTracker = () => {
   const [data, setData] = useState([]);
   const [sortBy, setSortBy] = useState("county");
   const [searchTerm, setSearchTerm] = useState("");
+  const [dataIsDummy, setDataIsDummy] = useState(false);
   const [currentView, setCurrentView] = useState("analytics");
   const [selectedState, setSelectedState] = useState("All States");
 
@@ -216,13 +218,14 @@ const BirdSpeciesTracker = () => {
   return (
     <>
       <NavBar />
-      {file !== null && file.type !== "text/csv" && (
+      {!dataIsDummy && file !== null && file.type !== "text/csv" && (
         <div className="flex flex-col items-center mt-6">
           <div className="">File must be a .csv.</div>
           <div className="">Please refresh the page and try again.</div>
         </div>
       )}
       {!loading &&
+        !dataIsDummy &&
         file !== null &&
         file.type === "text/csv" &&
         Array.isArray(data) &&
@@ -244,7 +247,7 @@ const BirdSpeciesTracker = () => {
       ) : (
         <div className="min-h-screen flex flex-col items-center">
           {!file && (
-            <div className="flex flex-col items-center mt-4 w-[100%] max-w-[600px]">
+            <div className="flex flex-col items-center mt-8 w-[100%] max-w-[600px]">
               <p>
                 Upload your{" "}
                 <a
@@ -281,6 +284,23 @@ const BirdSpeciesTracker = () => {
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center"
               >
                 <Upload className="mr-2" size={16} /> Upload
+              </button>
+            </div>
+          )}
+
+          {!file && (
+            // <div className="flex flex-col items-center mt-8 space-x-2 mb-4">
+            <div className="flex flex-col items-center bg-gray-200 rounded-lg p-4 mt-28 w-[100%] max-w-[600px]">
+              <p>Don&apos;t have your data yet?</p>
+              <button
+                onClick={() => {
+                  setFile(csvFile);
+                  setDataIsDummy(true);
+                  processData(csvFile);
+                }}
+                className="bg-blue-900 text-white px-4 py-2 rounded-lg flex items-center"
+              >
+                Proceed with Dummy Data
               </button>
             </div>
           )}
@@ -351,6 +371,12 @@ const BirdSpeciesTracker = () => {
                 <h3 className="flex justify-center mb-6">
                   Top Big Day in each County
                 </h3>
+              )}
+
+              {!loading && dataIsDummy && file !== null && (
+                <div className="flex flex-col items-center my-3 text-rose-700 italic">
+                  <div className="">Viewing fake dummy data</div>
+                </div>
               )}
 
               {sortedData.map((item, index) => (
