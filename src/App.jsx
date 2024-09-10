@@ -90,6 +90,10 @@ const BirdSpeciesTracker = () => {
     const stateCountyData = {};
     rawData.forEach((row) => {
       if (row.County) {
+
+        //don't count hybrids or multi-species (Snow/Ross's Goose)
+        if (row["Common Name"].includes('/') || row["Common Name"].includes('hybrid') || row["Common Name"].includes('sp.')) return;
+
         const {
           County,
           Date,
